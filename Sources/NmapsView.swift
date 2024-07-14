@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  NmapsView.swift
 //  
 //
 //  Created by 최지철 on 7/14/24.
