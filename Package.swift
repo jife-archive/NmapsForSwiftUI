@@ -6,6 +6,9 @@ import PackageDescription
 
 let package = Package(
     name: "NmapsForSwiftUI",
+    platforms: [
+        .iOS(.v16)
+    ],
     products: [
         .library(
             name: "NmapsForSwiftUI",

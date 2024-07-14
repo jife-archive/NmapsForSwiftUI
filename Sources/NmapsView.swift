@@ -6,10 +6,8 @@
 //
 
 import SwiftUI
-
 import NMapsMap
 
-// NaverMap 정의
 public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: RandomAccessCollection, MarkerItems.Element: Identifiable {
     
     @Binding var cameraPosition: NMFCameraPosition
@@ -22,7 +20,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     
     var markerItems: MarkerItems
     var markerContent: ((MarkerItems.Element) -> NaverMapMarker)?
-    var pathContent: () -> NaverMapPath = { NaverMapPath() }
+    var pathContent: () -> NaverMapPolyLine = { NaverMapPolyLine() }
     
     var logoAlign: NMFLogoAlign = .leftBottom
     var logoMargin: UIEdgeInsets = .zero
@@ -111,13 +109,9 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     private func updatePath(_ mapView: NMFMapView, coordinator: Coordinator) {
         guard lineCoordinates.count > 1 else { return }
         let content = pathContent()
-        if let path = coordinator.path {
-            content.updatePath(path, coordinates: lineCoordinates, mapView: mapView)
-        } else {
-            let path = content.makePath()
-            content.updatePath(path, coordinates: lineCoordinates, mapView: mapView)
-            coordinator.path = path
-        }
+        let path = content.makePolyline(coordinates: lineCoordinates)
+        path.mapView = mapView
+        coordinator.path = path
     }
     
     public func makeCoordinator() -> Coordinator {
@@ -127,7 +121,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     public class Coordinator: NSObject, NMFMapViewTouchDelegate, NMFMapViewCameraDelegate, NMFMapViewOptionDelegate {
         var parent: NaverMap
         var markers = [AnyHashable: NMFMarker]()
-        var path: NMFPath?
+        var path: NMFPolylineOverlay?
         
         var updatingParentOptions = false
         var updatingParentCamera = false
@@ -159,7 +153,6 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     }
 }
 
-// MARK: - NaverMap Modifier
 public extension NaverMap {
     func onMapTap(perform action: @escaping (CLLocationCoordinate2D) -> Void) -> NaverMap {
         var new = self
@@ -167,7 +160,7 @@ public extension NaverMap {
         return new
     }
     
-    func pathStyle(_ content: @escaping () -> NaverMapPath) -> NaverMap {
+    func pathStyle(_ content: @escaping () -> NaverMapPolyLine) -> NaverMap {
         var new = self
         new.pathContent = content
         return new
